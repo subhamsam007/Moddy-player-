@@ -21,7 +21,6 @@ export default function FaceExpressionDetector() {
         const loadModels = async () => {
             await faceapi.nets.tinyFaceDetector.loadFromUri("/models");
             await faceapi.nets.ageGenderNet.loadFromUri("/models");
-
             //   await faceapi.nets.faceLandmark68Net.loadFromUri("/models");
             await faceapi.nets.faceExpressionNet.loadFromUri("/models");
 
@@ -95,8 +94,8 @@ export default function FaceExpressionDetector() {
             {/* Overlay Canvas */}
             <canvas
                 ref={canvasRef}
-                width="500"
-                height="400"
+                width="700"
+                height="500"
                 style={{ position: "absolute", top: 0, left: 0 }}
             />
         </div>
