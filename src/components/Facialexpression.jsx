@@ -1,115 +1,124 @@
 import React, { useEffect, useRef } from "react";
-import * as faceapi from "@vladmandic/face-api"; // use the maintained fork
+import * as faceapi from "@vladmandic/face-api";
+
 
 export default function FaceExpressionDetector() {
-    const videoRef = useRef(null);
-    const canvasRef = useRef(null);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
 
-    // Start webcam
-    const startVideo = () => {
-        navigator.mediaDevices
-            .getUserMedia({ video: true })
-            .then((stream) => {
-                if (videoRef.current) {
-                    videoRef.current.srcObject = stream;
-                }
-            })
-            .catch((err) => console.error("Error accessing webcam:", err));
+  useEffect(() => {
+    const MODEL_URL = "/models";
+
+    // Load the face-api.js models
+    const loadModels = async () => {
+      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+      await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
     };
 
-    useEffect(() => {
-        const loadModels = async () => {
-            await faceapi.nets.tinyFaceDetector.loadFromUri("/models");
-            await faceapi.nets.ageGenderNet.loadFromUri("/models");
-            //   await faceapi.nets.faceLandmark68Net.loadFromUri("/models");
-            await faceapi.nets.faceExpressionNet.loadFromUri("/models");
+    // Start webcam stream
+    const startVideo = () => {
+      navigator.mediaDevices
+        .getUserMedia({ video: true })
+        .then((stream) => {
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+        })
+        .catch((err) => console.error("Error accessing webcam:", err));
+    };
 
-            startVideo();
-        };
+    // Run detection when the video starts playing
+    const handleVideoPlay = () => {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
 
-        loadModels();
+      const displaySize = {
+        width: video.videoWidth,
+        height: video.videoHeight,
+      };
 
-        if (videoRef.current) {
-            videoRef.current.addEventListener("play", () => {
-                const canvas = canvasRef.current;
-                const displaySize = {
-                    width: videoRef.current.width,
-                    height: videoRef.current.height,
-                };
+      // Match canvas to video size
+      faceapi.matchDimensions(canvas, displaySize);
 
-                faceapi.matchDimensions(canvas, displaySize);
+      setInterval(async () => {
+        const detections = await faceapi
+          .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+          .withFaceExpressions();
+          let mostprobableexpression = "";
+          let withFaceExpressions = "";
+          for (const expression of Object.keys(detections[0].expressions)) {
+            if (detections[0].expressions[expression] > mostprobableexpression) {
+                mostprobableexpression = detections[0].expressions[expression];
+                withFaceExpressions = expression;
+            }
+          }
+          console.log(mostprobableexpression);
 
-                setInterval(async () => {
-                    const detections = await faceapi
-                        .detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions())
-                        .withFaceExpressions()
-                        .withAgeAndGender();  // ✅ Step 2
+        const resizedDetections = faceapi.resizeResults(detections, displaySize);
 
-                        let expresionProbability = 0
-                        let expresion = ''
-                        for (const [key, value] of Object.entries(detections[0]?.expressions || {})) {
-                            if (value > expresionProbability) {
-                                expresionProbability = value
-                                expresion = key
-                            }
-                        }
-                        console.log(`Expresion: ${expresion} `)
+        const context = canvas.getContext("2d");
+        context.clearRect(0, 0, canvas.width, canvas.height);
 
-                    console.log(detections)
+        resizedDetections.forEach((detection) => {
+          const { x, y, width, height } = detection.detection.box;
 
-                    const resized = faceapi.resizeResults(detections, displaySize);
+          // Find the dominant expression
+          const expressions = detection.expressions;
+          const maxExpression = Object.keys(expressions).reduce((a, b) =>
+            expressions[a] > expressions[b] ? a : b
+          );
 
-                    const context = canvas.getContext("2d");
-                    context.clearRect(0, 0, canvas.width, canvas.height);
+          // Draw rectangle around the face
+          context.beginPath();
+          context.strokeStyle = "#00FF00"; // Green rectangle
+          context.lineWidth = 3;
+          context.rect(x, y, width, height);
+          context.stroke();
 
-                    // ✅ Draw bounding box
-                    faceapi.draw.drawDetections(canvas, resized);
+          // Draw the dominant expression text
+          context.fillStyle = "#00FF00";
+          context.font = "20px Arial";
+          context.fillText(maxExpression.toUpperCase(), x + 5, y - 10);
+        });
+      }, 2000);
+    };
 
-                    // ✅ Draw expressions
-                    faceapi.draw.drawFaceExpressions(canvas, resized);
+    // Load models, then start video
+    loadModels().then(startVideo);
 
-                    // ✅ Step 3: Draw age & gender
-                    resized.forEach((detection) => {
-                        const { age, gender, genderProbability } = detection;
-                        const box = detection.detection.box;
+    // Event listener for when the video starts playing
+    if (videoRef.current) {
+      videoRef.current.addEventListener("play", handleVideoPlay);
+    }
+  }, []);
 
-                        const drawBox = new faceapi.draw.DrawBox(box, {
-                            label: `${Math.round(age)} yrs, ${gender} (${(genderProbability * 100).toFixed(0)}%)`
-                        });
-                        drawBox.draw(canvas);
-                    });
-                }, 200);
+  return (
+    <div style={{ position: "relative", width: "720px", height: "560px", margin: "auto" }}>
+      {/* Webcam Video */}
+      <video
+        ref={videoRef}
+        autoPlay
+        muted
+        style={{
+          position: "absolute",
+          width: "720px",
+          height: "560px",
+          top: 0,
+          left: 0,
+        }}
+      />
 
-            });
-        }
-    }, []);
-
-    return (
-        <div
-            style={{
-                position: "relative",
-                width: "500px",
-                height: "400px",
-                margin: "auto",
-            }}
-        >
-            {/* Webcam Video */}
-            <video
-                ref={videoRef}
-                autoPlay
-                muted
-                width="500"
-                height="400"
-                style={{ position: "absolute", top: 0, left: 0 }}
-            />
-
-            {/* Overlay Canvas */}
-            <canvas
-                ref={canvasRef}
-                width="700"
-                height="500"
-                style={{ position: "absolute", top: 0, left: 0 }}
-            />
-        </div>
-    );
+      {/* Canvas for drawing rectangle & expression */}
+      <canvas
+        ref={canvasRef}
+        width="720"
+        height="560"
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+        }}
+      />
+    </div>
+  );
 }
