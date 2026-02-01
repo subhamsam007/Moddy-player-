@@ -1,17 +1,86 @@
 .mood_songs{
-
     width: 100%;
-    padding: 4rem ;
-    padding-top: 0;
-    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-
+    padding: 2.5rem;
+    padding-top: 0.75rem;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    color: var(--text-primary);
 }
 .mood_songs h1{
     margin-bottom: 1rem;
-
+    font-size: 1.5rem;
+    font-weight: 700;
 }
-.mood_songs .song{
+.mood_songs .song_list{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+.song_card{
+    background: linear-gradient(180deg, rgba(49, 69, 98, 0.773), rgba(73, 125, 222, 0));
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 6px 18px rgba(135, 146, 162, 0.628);
+    position: relative;
+}
+.song_card h3{
+    margin: 0 0 0.25rem 0;
+    font-size: 1.05rem;
+}
+.song_card p{
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+.play_pause_button{
+    display:flex;
+    align-items:center;
+    gap:0.5rem;
+    margin-top:0.75rem;
+}
+
+.play_pause_button button {
+    background: none;
+    border: none;
+    color: #4a9eff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.25rem;
     display: flex;
-    width: 100%;
-    justify-content: space-between;
+    align-items: center;
+}
+
+.play_pause_button button:hover {
+    color: #6bffbc;
+}
+
+.native_audio_player {
+    flex: 1;
+    height: 25px;
+    min-width: 200px;
+}
+
+.native_audio_player::-webkit-media-controls-panel {
+    background: rgba(1, 5, 15, 0.286);
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgb(135, 146, 162);
+}
+
+.native_audio_player::-webkit-media-controls-play-button {
+    display: none;
+}
+
+.no-face-overlay{
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(106, 18, 18, 0.6);
+    color: #fff;
+    font-weight: 700;
+    border-radius: 12px;
+    pointer-events: none;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }

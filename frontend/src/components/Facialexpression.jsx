@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from "react";
 import * as faceapi from "@vladmandic/face-api";
 import "./facialExpression.css";
+import axios from "axios";
 
-export default function FaceExpressionDetector() {
+export default function FaceExpressionDetector({ setSongs }) {
   const videoRef = useRef(null);
 
   const MODEL_URL = "/models";
@@ -54,6 +55,15 @@ export default function FaceExpressionDetector() {
     }
 
     console.log("Most probable expression:", mostProbableExpression);
+    axios
+      .get(`http://localhost:3000/songs?mood=${mostProbableExpression}`)
+      .then((response) => {
+        console.log("Songs fetched:", response.data.songs);
+        setSongs(response.data.songs);
+      })
+      .catch((error) => {
+        console.error("Error fetching songs:", error);
+      });
   };
 
   useEffect(() => {
@@ -72,9 +82,7 @@ export default function FaceExpressionDetector() {
       />
       
       {/* Detect button */}
-      <button onClick={detect} style={{ marginTop: "100px", 
-        left: "350px"
-      }}>
+      <button className="detect-button" onClick={detect}>
         Detect Expressions
       </button>
     </div>
